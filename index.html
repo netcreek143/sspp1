@@ -22,19 +22,27 @@
       background: white;
       border-radius: 20px;
       padding: 30px;
-      max-width: 500px;
+      max-width: 600px;
       width: 100%;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+
+
+    .logo {
+      max-width: 120px;
+      margin: 0 auto 20px;
     }
 
     h2 {
-      text-align: center;
       color: #2c3e50;
       margin-bottom: 25px;
+      font-size: 22px;
     }
 
     .form-group {
+      text-align: left;
       margin-bottom: 20px;
     }
 
@@ -67,31 +75,53 @@
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      margin-top: 10px;
     }
 
     button:hover {
       background: #3e9140;
     }
 
-    .result {
+    .result, #invoice {
       background: #f9f9f9;
       margin-top: 25px;
       padding: 20px;
       border-radius: 15px;
-      font-size: 18px;
-      text-align: center;
+      font-size: 16px;
       box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
     }
 
     .hidden {
       display: none;
     }
+
+    .invoice-section {
+      margin-top: 15px;
+      text-align: left;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #invoice, #invoice * {
+        visibility: visible;
+      }
+
+      #invoice {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Sri Sabari Print Pack Box Cost Calculator</h2>
+    <img src="images/sspplogonobg.jpg" alt="Sri Sabari Print Pack Logo" class="logo" />
+    <h2>Sri Sabari Print Pack Cake Box Cost Calculator</h2>
 
     <div class="form-group">
       <label for="boardCost">Board cost per sheet (₹):</label>
@@ -104,7 +134,7 @@
     </div>
 
     <div class="form-group">
-      <label for="printingCost">Printing cost per box (₹):</label>
+      <label for="printingCost">Total printing cost per sheet (₹):</label>
       <input type="number" id="printingCost" step="0.01" />
     </div>
 
@@ -122,19 +152,25 @@
     </div>
 
     <div class="form-group">
-      <label for="otherCosts">Other processing costs per box (₹):</label>
+      <label for="otherCosts">Other processing cost per sheet (₹):</label>
       <input type="number" id="otherCosts" step="0.01" />
     </div>
 
-    <button onclick="calculateCost()">Calculate Cost</button>
+    <div class="form-group">
+      <label for="profitMargin">Profit margin (%):</label>
+      <input type="number" id="profitMargin" step="0.01" value="0" />
+    </div>
 
-    <div class="result hidden" id="resultBox"></div>
+    <button onclick="calculateCost()">Calculate Cost</button>
+    <button onclick="window.print()">🧾 Print Invoice</button>
+
+    <div id="invoice" class="result hidden"></div>
   </div>
 
   <script>
     const laminationDropdown = document.getElementById('lamination');
     const laminationCostGroup = document.getElementById('laminationCostGroup');
-    const resultBox = document.getElementById('resultBox');
+    const invoiceBox = document.getElementById('invoice');
 
     laminationDropdown.addEventListener('change', () => {
       laminationCostGroup.classList.toggle('hidden', laminationDropdown.value !== 'yes');
@@ -143,17 +179,35 @@
     function calculateCost() {
       const boardCost = parseFloat(document.getElementById('boardCost').value) || 0;
       const boxesPerSheet = parseInt(document.getElementById('boxesPerSheet').value) || 1;
-      const printingCost = parseFloat(document.getElementById('printingCost').value) || 0;
+      const printingTotal = parseFloat(document.getElementById('printingCost').value) || 0;
       const laminationCost = laminationDropdown.value === 'yes'
         ? parseFloat(document.getElementById('laminationCost').value) || 0
         : 0;
-      const otherCosts = parseFloat(document.getElementById('otherCosts').value) || 0;
+      const otherTotal = parseFloat(document.getElementById('otherCosts').value) || 0;
+      const profitPercent = parseFloat(document.getElementById('profitMargin').value) || 0;
 
-      const boardCostPerBox = boardCost / boxesPerSheet;
-      const totalCost = boardCostPerBox + printingCost + laminationCost + otherCosts;
+      const boardPerBox = boardCost / boxesPerSheet;
+      const printingPerBox = printingTotal / boxesPerSheet;
+      const otherPerBox = otherTotal / boxesPerSheet;
 
-      resultBox.innerHTML = `Total Manufacturing Cost per Box: <strong>₹${totalCost.toFixed(2)}</strong>`;
-      resultBox.classList.remove('hidden');
+      const costPrice = boardPerBox + printingPerBox + laminationCost + otherPerBox;
+      const profitAmount = (costPrice * profitPercent) / 100;
+      const sellingPrice = costPrice + profitAmount;
+invoiceBox.innerHTML = `
+  <img src="images/sspplogonobg.jpg" alt="Logo" style="max-width: 100px; margin-bottom: 10px;" />
+  <h3>📄 Invoice Summary</h3>
+  <div class="invoice-section">
+    <p><strong>Board Cost per Box:</strong> ₹${boardPerBox.toFixed(2)}</p>
+    <p><strong>Printing Cost per Box:</strong> ₹${printingPerBox.toFixed(2)}</p>
+    <p><strong>Lamination Cost per Box:</strong> ₹${laminationCost.toFixed(2)}</p>
+    <p><strong>Other Processing Cost per Box:</strong> ₹${otherPerBox.toFixed(2)}</p>
+    <p><strong>Total Manufacturing Cost (per box):</strong> ₹${costPrice.toFixed(2)}</p>
+    <p><strong>Profit Margin:</strong> ${profitPercent}%</p>
+    <p><strong>Selling Price (per box):</strong> ₹${sellingPrice.toFixed(2)}</p>
+  </div>
+`;
+
+      invoiceBox.classList.remove('hidden');
     }
   </script>
 </body>
